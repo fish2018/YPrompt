@@ -120,6 +120,10 @@ class VersionService:
                 'format': current_prompt.get('format', 'markdown'),
                 'tags': current_prompt.get('tags', ''),
                 
+                # 用户提示词上下文（保存完整上下文）
+                'system_prompt': current_prompt.get('system_prompt', ''),
+                'conversation_history': current_prompt.get('conversation_history', ''),
+                
                 # 元数据
                 'change_log': data.get('change_log', ''),
                 'change_summary': data.get('change_summary', '版本更新'),
@@ -423,7 +427,9 @@ class VersionService:
                     final_prompt = '{escape_sql_string(target_version.get("final_prompt", ""))}',
                     language = '{escape_sql_string(target_version.get("language", "zh"))}',
                     format = '{escape_sql_string(target_version.get("format", "markdown"))}',
-                    tags = '{escape_sql_string(target_version.get("tags", ""))}'
+                    tags = '{escape_sql_string(target_version.get("tags", ""))}',
+                    system_prompt = '{escape_sql_string(target_version.get("system_prompt", ""))}',
+                    conversation_history = '{escape_sql_string(target_version.get("conversation_history", ""))}'
                 WHERE id = {prompt_id}
             """
             await self.db.execute(update_sql)

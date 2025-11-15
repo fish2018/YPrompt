@@ -82,12 +82,38 @@
             </div>
           </div>
 
+          <!-- 用户提示词上下文（仅用户提示词显示） -->
+          <div v-if="versionDetail.system_prompt || versionDetail.conversation_history" class="border-t pt-6">
+            <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+              用户提示词上下文
+            </h4>
+            
+            <!-- 系统提示词 -->
+            <div v-if="versionDetail.system_prompt" class="mb-4">
+              <h5 class="text-xs font-semibold text-gray-700 mb-2">系统提示词</h5>
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 max-h-48 overflow-y-auto">
+                <pre class="text-sm text-gray-800 whitespace-pre-wrap font-mono">{{ versionDetail.system_prompt }}</pre>
+              </div>
+            </div>
+            
+            <!-- 对话历史 -->
+            <div v-if="versionDetail.conversation_history" class="mb-4">
+              <h5 class="text-xs font-semibold text-gray-700 mb-2">对话历史</h5>
+              <div class="bg-green-50 border border-green-200 rounded-lg p-3 max-h-48 overflow-y-auto">
+                <pre class="text-sm text-gray-800 whitespace-pre-wrap font-mono">{{ formatConversationHistory(versionDetail.conversation_history) }}</pre>
+              </div>
+            </div>
+          </div>
+
           <div class="border-t pt-6">
             <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              提示词内容
+              {{ versionDetail.system_prompt || versionDetail.conversation_history ? '用户提示词内容' : '提示词内容' }}
             </h4>
             <div class="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
               <pre class="text-sm text-gray-800 whitespace-pre-wrap font-mono">{{ versionDetail.final_prompt || '无内容' }}</pre>
@@ -214,6 +240,22 @@ const formatSize = (bytes: number) => {
   if (bytes < 1024) return `${bytes}B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
+}
+
+const formatConversationHistory = (history: string) => {
+  try {
+    // 尝试解析JSON格式的对话历史
+    const parsed = JSON.parse(history)
+    if (Array.isArray(parsed)) {
+      return parsed.map((msg, index) => 
+        `[${index + 1}] ${msg.role}: ${msg.content}`
+      ).join('\n\n')
+    }
+    return history
+  } catch {
+    // 如果不是JSON，直接返回原始内容
+    return history
+  }
 }
 
 watch(() => props.version, (newVersion) => {

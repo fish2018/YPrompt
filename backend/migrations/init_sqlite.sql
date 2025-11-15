@@ -107,6 +107,10 @@ CREATE TABLE IF NOT EXISTS prompt_versions (
   format VARCHAR(10) DEFAULT 'markdown',
   tags VARCHAR(500) DEFAULT NULL,
   
+  -- 用户提示词上下文（保存完整上下文）
+  system_prompt TEXT DEFAULT NULL,
+  conversation_history TEXT DEFAULT NULL,
+  
   -- 版本元数据
   change_log TEXT DEFAULT NULL,
   change_summary VARCHAR(500) DEFAULT NULL,
