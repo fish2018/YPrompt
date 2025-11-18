@@ -335,7 +335,7 @@ export const useSettingsStore = defineStore('settings', () => {
       }
     }
 
-    // 从云端加载提示词规则
+    // 从云端加载提示词规则（每次打开浏览器都调用，确保最新）
     try {
       await promptConfigManager.loadFromCloud()
     } catch (error) {
@@ -392,6 +392,9 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
+  // 保存原始值,用于对比是否改变
+  const originalPromptRules = ref<any>(null)
+
   // 加载所有提示词内容到编辑器
   const loadPromptRules = () => {
     // 同步精简版开关状态到配置管理器
@@ -408,6 +411,19 @@ export const useSettingsStore = defineStore('settings', () => {
     // 加载用户提示词优化规则
     editingUserPromptOptimizationRules.value.qualityAnalysis = promptConfigManager.getUserPromptQualityAnalysis()
     editingUserPromptOptimizationRules.value.quickOptimization = promptConfigManager.getUserPromptQuickOptimization()
+    
+    // 保存原始值快照
+    originalPromptRules.value = {
+      systemRules: editingSystemRules.value,
+      userRules: editingUserRules.value,
+      requirementReportRules: editingRequirementReportRules.value,
+      finalPromptRules: JSON.parse(JSON.stringify(editingFinalPromptRules.value)),
+      qualityAnalysisRules: { systemPrompt: editingQualityAnalysisRules.value.systemPrompt },
+      userPromptOptimizationRules: {
+        qualityAnalysis: editingUserPromptOptimizationRules.value.qualityAnalysis,
+        quickOptimization: editingUserPromptOptimizationRules.value.quickOptimization
+      }
+    }
   }
 
   // 提示词编辑相关方法
@@ -434,20 +450,63 @@ export const useSettingsStore = defineStore('settings', () => {
 
   const savePromptRules = async () => {
     try {
-      // 保存编辑后的提示词规则到本地
-      promptConfigManager.updateSystemPromptRules(editingSystemRules.value)
-      promptConfigManager.updateUserGuidedPromptRules(editingUserRules.value)
-      promptConfigManager.updateRequirementReportRules(editingRequirementReportRules.value)
-      // 更新独立的最终提示词生成规则
-      promptConfigManager.updateThinkingPointsExtractionPrompt(editingFinalPromptRules.value.THINKING_POINTS_EXTRACTION)
-      promptConfigManager.updateSystemPromptGenerationPrompt(editingFinalPromptRules.value.SYSTEM_PROMPT_GENERATION)
-      promptConfigManager.updateOptimizationAdvicePrompt(editingFinalPromptRules.value.OPTIMIZATION_ADVICE_GENERATION)
-      promptConfigManager.updateOptimizationApplicationPrompt(editingFinalPromptRules.value.OPTIMIZATION_APPLICATION)
-      // 保存质量分析规则
-      promptConfigManager.updateQualityAnalysisSystemPrompt(editingQualityAnalysisRules.value.systemPrompt)
-      // 保存用户提示词优化规则
-      promptConfigManager.updateUserPromptQualityAnalysis(editingUserPromptOptimizationRules.value.qualityAnalysis)
-      promptConfigManager.updateUserPromptQuickOptimization(editingUserPromptOptimizationRules.value.quickOptimization)
+      // 对比每个字段,只更新真正改变的字段
+      if (originalPromptRules.value) {
+        // 1. 系统提示词规则
+        if (editingSystemRules.value !== originalPromptRules.value.systemRules) {
+          promptConfigManager.updateSystemPromptRules(editingSystemRules.value)
+        }
+        
+        // 2. 用户引导规则
+        if (editingUserRules.value !== originalPromptRules.value.userRules) {
+          promptConfigManager.updateUserGuidedPromptRules(editingUserRules.value)
+        }
+        
+        // 3. 需求报告规则
+        if (editingRequirementReportRules.value !== originalPromptRules.value.requirementReportRules) {
+          promptConfigManager.updateRequirementReportRules(editingRequirementReportRules.value)
+        }
+        
+        // 4. 最终提示词生成规则
+        if (editingFinalPromptRules.value.THINKING_POINTS_EXTRACTION !== originalPromptRules.value.finalPromptRules.THINKING_POINTS_EXTRACTION) {
+          promptConfigManager.updateThinkingPointsExtractionPrompt(editingFinalPromptRules.value.THINKING_POINTS_EXTRACTION)
+        }
+        if (editingFinalPromptRules.value.SYSTEM_PROMPT_GENERATION !== originalPromptRules.value.finalPromptRules.SYSTEM_PROMPT_GENERATION) {
+          promptConfigManager.updateSystemPromptGenerationPrompt(editingFinalPromptRules.value.SYSTEM_PROMPT_GENERATION)
+        }
+        if (editingFinalPromptRules.value.OPTIMIZATION_ADVICE_GENERATION !== originalPromptRules.value.finalPromptRules.OPTIMIZATION_ADVICE_GENERATION) {
+          promptConfigManager.updateOptimizationAdvicePrompt(editingFinalPromptRules.value.OPTIMIZATION_ADVICE_GENERATION)
+        }
+        if (editingFinalPromptRules.value.OPTIMIZATION_APPLICATION !== originalPromptRules.value.finalPromptRules.OPTIMIZATION_APPLICATION) {
+          promptConfigManager.updateOptimizationApplicationPrompt(editingFinalPromptRules.value.OPTIMIZATION_APPLICATION)
+        }
+        
+        // 5. 质量分析规则
+        if (editingQualityAnalysisRules.value.systemPrompt !== originalPromptRules.value.qualityAnalysisRules.systemPrompt) {
+          promptConfigManager.updateQualityAnalysisSystemPrompt(editingQualityAnalysisRules.value.systemPrompt)
+        }
+        
+        // 6. 用户提示词优化规则
+        if (editingUserPromptOptimizationRules.value.qualityAnalysis !== originalPromptRules.value.userPromptOptimizationRules.qualityAnalysis) {
+          promptConfigManager.updateUserPromptQualityAnalysis(editingUserPromptOptimizationRules.value.qualityAnalysis)
+        }
+        if (editingUserPromptOptimizationRules.value.quickOptimization !== originalPromptRules.value.userPromptOptimizationRules.quickOptimization) {
+          promptConfigManager.updateUserPromptQuickOptimization(editingUserPromptOptimizationRules.value.quickOptimization)
+        }
+      } else {
+        // 如果没有原始值(不应该发生),则全部更新
+        console.warn('[SavePromptRules] 没有原始值,将更新所有字段')
+        promptConfigManager.updateSystemPromptRules(editingSystemRules.value)
+        promptConfigManager.updateUserGuidedPromptRules(editingUserRules.value)
+        promptConfigManager.updateRequirementReportRules(editingRequirementReportRules.value)
+        promptConfigManager.updateThinkingPointsExtractionPrompt(editingFinalPromptRules.value.THINKING_POINTS_EXTRACTION)
+        promptConfigManager.updateSystemPromptGenerationPrompt(editingFinalPromptRules.value.SYSTEM_PROMPT_GENERATION)
+        promptConfigManager.updateOptimizationAdvicePrompt(editingFinalPromptRules.value.OPTIMIZATION_ADVICE_GENERATION)
+        promptConfigManager.updateOptimizationApplicationPrompt(editingFinalPromptRules.value.OPTIMIZATION_APPLICATION)
+        promptConfigManager.updateQualityAnalysisSystemPrompt(editingQualityAnalysisRules.value.systemPrompt)
+        promptConfigManager.updateUserPromptQualityAnalysis(editingUserPromptOptimizationRules.value.qualityAnalysis)
+        promptConfigManager.updateUserPromptQuickOptimization(editingUserPromptOptimizationRules.value.quickOptimization)
+      }
       
       // 保存到云端
       await promptConfigManager.saveToCloud()
@@ -459,62 +518,62 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
-  const resetSystemPromptRules = () => {
+  const resetSystemPromptRules = async () => {
     // 重置系统提示词规则为默认值
-    promptConfigManager.resetSystemPromptRules()
+    await promptConfigManager.resetSystemPromptRules()
     editingSystemRules.value = promptConfigManager.getSystemPromptRules()
   }
 
-  const resetUserPromptRules = () => {
+  const resetUserPromptRules = async () => {
     // 重置用户引导规则为默认值
-    promptConfigManager.resetUserGuidedPromptRules()
+    await promptConfigManager.resetUserGuidedPromptRules()
     editingUserRules.value = promptConfigManager.getUserGuidedPromptRules()
   }
 
-  const resetRequirementReportRules = () => {
+  const resetRequirementReportRules = async () => {
     // 重置需求报告规则为默认值
-    promptConfigManager.resetRequirementReportRules()
+    await promptConfigManager.resetRequirementReportRules()
     editingRequirementReportRules.value = promptConfigManager.getRequirementReportRules()
   }
 
   // 重置独立的最终提示词生成配置
-  const resetThinkingPointsExtractionPrompt = () => {
-    promptConfigManager.resetThinkingPointsExtractionPrompt()
+  const resetThinkingPointsExtractionPrompt = async () => {
+    await promptConfigManager.resetThinkingPointsExtractionPrompt()
     const finalRules = promptConfigManager.getFinalPromptGenerationRules()
     editingFinalPromptRules.value = { ...finalRules }
   }
 
-  const resetSystemPromptGenerationPrompt = () => {
-    promptConfigManager.resetSystemPromptGenerationPrompt()
+  const resetSystemPromptGenerationPrompt = async () => {
+    await promptConfigManager.resetSystemPromptGenerationPrompt()
     const finalRules = promptConfigManager.getFinalPromptGenerationRules()
     editingFinalPromptRules.value = { ...finalRules }
   }
 
-  const resetOptimizationAdvicePrompt = () => {
-    promptConfigManager.resetOptimizationAdvicePrompt()
+  const resetOptimizationAdvicePrompt = async () => {
+    await promptConfigManager.resetOptimizationAdvicePrompt()
     const finalRules = promptConfigManager.getFinalPromptGenerationRules()
     editingFinalPromptRules.value = { ...finalRules }
   }
 
-  const resetOptimizationApplicationPrompt = () => {
-    promptConfigManager.resetOptimizationApplicationPrompt()
+  const resetOptimizationApplicationPrompt = async () => {
+    await promptConfigManager.resetOptimizationApplicationPrompt()
     const finalRules = promptConfigManager.getFinalPromptGenerationRules()
     editingFinalPromptRules.value = { ...finalRules }
   }
 
   // 重置质量分析配置
-  const resetQualityAnalysisSystemPrompt = () => {
-    promptConfigManager.resetQualityAnalysisSystemPrompt()
+  const resetQualityAnalysisSystemPrompt = async () => {
+    await promptConfigManager.resetQualityAnalysisSystemPrompt()
     editingQualityAnalysisRules.value.systemPrompt = promptConfigManager.getQualityAnalysisSystemPrompt()
   }
 
-  const resetUserPromptQualityAnalysis = () => {
-    promptConfigManager.resetUserPromptQualityAnalysis()
+  const resetUserPromptQualityAnalysis = async () => {
+    await promptConfigManager.resetUserPromptQualityAnalysis()
     editingUserPromptOptimizationRules.value.qualityAnalysis = promptConfigManager.getUserPromptQualityAnalysis()
   }
 
-  const resetUserPromptQuickOptimization = () => {
-    promptConfigManager.resetUserPromptQuickOptimization()
+  const resetUserPromptQuickOptimization = async () => {
+    await promptConfigManager.resetUserPromptQuickOptimization()
     editingUserPromptOptimizationRules.value.quickOptimization = promptConfigManager.getUserPromptQuickOptimization()
   }
 

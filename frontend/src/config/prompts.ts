@@ -63,6 +63,7 @@ export class PromptConfigManager {
   private static instance: PromptConfigManager
   private config: PromptConfig
   private useSlimRules: boolean = false
+  private dirtyFields: Set<string> = new Set() // 追踪修改的字段
   
   private constructor() {
     this.config = {
@@ -113,11 +114,13 @@ export class PromptConfigManager {
 
   public updateSystemPromptRules(rules: string): void {
     this.config.systemPromptRules = rules
+    this.dirtyFields.add('system_prompt_rules')
     this.saveToStorage()
   }
 
   public updateUserGuidedPromptRules(rules: string): void {
     this.config.userGuidedPromptRules = rules
+    this.dirtyFields.add('user_guided_prompt_rules')
     this.saveToStorage()
   }
 
@@ -127,6 +130,7 @@ export class PromptConfigManager {
 
   public updateRequirementReportRules(rules: string): void {
     this.config.requirementReportRules = rules
+    this.dirtyFields.add('requirement_report_rules')
     this.saveToStorage()
   }
 
@@ -184,6 +188,7 @@ export class PromptConfigManager {
   // 独立的最终提示词生成配置更新方法
   public updateThinkingPointsExtractionPrompt(prompt: string): void {
     this.config.thinkingPointsExtractionPrompt = prompt
+    this.dirtyFields.add('thinking_points_extraction_prompt')
     this.saveToStorage()
   }
 
@@ -194,6 +199,7 @@ export class PromptConfigManager {
 
   public updateSystemPromptGenerationPrompt(prompt: string): void {
     this.config.systemPromptGenerationPrompt = prompt
+    this.dirtyFields.add('system_prompt_generation_prompt')
     this.saveToStorage()
   }
 
@@ -204,6 +210,7 @@ export class PromptConfigManager {
 
   public updateOptimizationAdvicePrompt(prompt: string): void {
     this.config.optimizationAdvicePrompt = prompt
+    this.dirtyFields.add('optimization_advice_prompt')
     this.saveToStorage()
   }
 
@@ -214,6 +221,7 @@ export class PromptConfigManager {
 
   public updateOptimizationApplicationPrompt(prompt: string): void {
     this.config.optimizationApplicationPrompt = prompt
+    this.dirtyFields.add('optimization_application_prompt')
     this.saveToStorage()
   }
 
@@ -225,17 +233,20 @@ export class PromptConfigManager {
   // 质量分析配置更新方法
   public updateQualityAnalysisSystemPrompt(prompt: string): void {
     this.config.qualityAnalysisSystemPrompt = prompt
+    this.dirtyFields.add('quality_analysis_system_prompt')
     this.saveToStorage()
   }
 
   // 用户提示词优化配置更新方法
   public updateUserPromptQualityAnalysis(prompt: string): void {
     this.config.userPromptQualityAnalysis = prompt
+    this.dirtyFields.add('user_prompt_quality_analysis')
     this.saveToStorage()
   }
 
   public updateUserPromptQuickOptimization(prompt: string): void {
     this.config.userPromptQuickOptimization = prompt
+    this.dirtyFields.add('user_prompt_quick_optimization')
     this.saveToStorage()
   }
 
@@ -286,27 +297,35 @@ export class PromptConfigManager {
   }
 
   // 重置系统提示词规则为默认值
-  public resetSystemPromptRules(): void {
+  public async resetSystemPromptRules(): Promise<void> {
     this.config.systemPromptRules = SYSTEM_PROMPT_RULES
     this.saveToStorage()
+    const { deleteUserPromptRules } = await import('@/services/apiService')
+    await deleteUserPromptRules(['system_prompt_rules'])
   }
 
   // 重置用户引导规则为默认值
-  public resetUserGuidedPromptRules(): void {
+  public async resetUserGuidedPromptRules(): Promise<void> {
     this.config.userGuidedPromptRules = USER_GUIDED_PROMPT_RULES
     this.saveToStorage()
+    const { deleteUserPromptRules } = await import('@/services/apiService')
+    await deleteUserPromptRules(['user_guided_prompt_rules'])
   }
 
   // 重置需求报告规则为默认值
-  public resetRequirementReportRules(): void {
+  public async resetRequirementReportRules(): Promise<void> {
     this.config.requirementReportRules = REQUIREMENT_REPORT_RULES
     this.saveToStorage()
+    const { deleteUserPromptRules } = await import('@/services/apiService')
+    await deleteUserPromptRules(['requirement_report_rules'])
   }
 
   // 重置独立的最终提示词生成配置为默认值
-  public resetThinkingPointsExtractionPrompt(): void {
+  public async resetThinkingPointsExtractionPrompt(): Promise<void> {
     this.config.thinkingPointsExtractionPrompt = THINKING_POINTS_EXTRACTION_PROMPT
     this.saveToStorage()
+    const { deleteUserPromptRules } = await import('@/services/apiService')
+    await deleteUserPromptRules(['thinking_points_extraction_prompt'])
   }
 
   public resetThinkingPointsSystemMessage(): void {
@@ -314,9 +333,11 @@ export class PromptConfigManager {
     this.saveToStorage()
   }
 
-  public resetSystemPromptGenerationPrompt(): void {
+  public async resetSystemPromptGenerationPrompt(): Promise<void> {
     this.config.systemPromptGenerationPrompt = SYSTEM_PROMPT_GENERATION_PROMPT
     this.saveToStorage()
+    const { deleteUserPromptRules } = await import('@/services/apiService')
+    await deleteUserPromptRules(['system_prompt_generation_prompt'])
   }
 
   public resetSystemPromptSystemMessage(): void {
@@ -324,9 +345,11 @@ export class PromptConfigManager {
     this.saveToStorage()
   }
 
-  public resetOptimizationAdvicePrompt(): void {
+  public async resetOptimizationAdvicePrompt(): Promise<void> {
     this.config.optimizationAdvicePrompt = OPTIMIZATION_ADVICE_PROMPT
     this.saveToStorage()
+    const { deleteUserPromptRules } = await import('@/services/apiService')
+    await deleteUserPromptRules(['optimization_advice_prompt'])
   }
 
   public resetOptimizationAdviceSystemMessage(): void {
@@ -334,9 +357,11 @@ export class PromptConfigManager {
     this.saveToStorage()
   }
 
-  public resetOptimizationApplicationPrompt(): void {
+  public async resetOptimizationApplicationPrompt(): Promise<void> {
     this.config.optimizationApplicationPrompt = OPTIMIZATION_APPLICATION_PROMPT
     this.saveToStorage()
+    const { deleteUserPromptRules } = await import('@/services/apiService')
+    await deleteUserPromptRules(['optimization_application_prompt'])
   }
 
   public resetOptimizationApplicationSystemMessage(): void {
@@ -345,20 +370,26 @@ export class PromptConfigManager {
   }
 
   // 重置质量分析配置为默认值
-  public resetQualityAnalysisSystemPrompt(): void {
+  public async resetQualityAnalysisSystemPrompt(): Promise<void> {
     this.config.qualityAnalysisSystemPrompt = QUALITY_ANALYSIS_SYSTEM_PROMPT
     this.saveToStorage()
+    const { deleteUserPromptRules } = await import('@/services/apiService')
+    await deleteUserPromptRules(['quality_analysis_system_prompt'])
   }
 
   // 重置用户提示词优化配置为默认值
-  public resetUserPromptQualityAnalysis(): void {
+  public async resetUserPromptQualityAnalysis(): Promise<void> {
     this.config.userPromptQualityAnalysis = USER_PROMPT_QUALITY_ANALYSIS
     this.saveToStorage()
+    const { deleteUserPromptRules } = await import('@/services/apiService')
+    await deleteUserPromptRules(['user_prompt_quality_analysis'])
   }
 
-  public resetUserPromptQuickOptimization(): void {
+  public async resetUserPromptQuickOptimization(): Promise<void> {
     this.config.userPromptQuickOptimization = USER_PROMPT_OPTIMIZATION_CONFIG.quick
     this.saveToStorage()
+    const { deleteUserPromptRules } = await import('@/services/apiService')
+    await deleteUserPromptRules(['user_prompt_quick_optimization'])
   }
 
   public resetUserPromptRules(): void {
@@ -373,41 +404,77 @@ export class PromptConfigManager {
     }
   }
 
+  /**
+   * 保存到云端（只保存修改过的字段）
+   */
   public async saveToCloud(): Promise<void> {
     try {
-      const { saveUserPromptRules } = await import('@/services/apiService')
-      // 转换为后端需要的格式（下划线命名）
-      const cloudData = {
-        system_prompt_rules: this.config.systemPromptRules,
-        user_guided_prompt_rules: this.config.userGuidedPromptRules,
-        requirement_report_rules: this.config.requirementReportRules,
-        thinking_points_extraction_prompt: this.config.thinkingPointsExtractionPrompt,
-        thinking_points_system_message: this.config.thinkingPointsSystemMessage,
-        system_prompt_generation_prompt: this.config.systemPromptGenerationPrompt,
-        system_prompt_system_message: this.config.systemPromptSystemMessage,
-        optimization_advice_prompt: this.config.optimizationAdvicePrompt,
-        optimization_advice_system_message: this.config.optimizationAdviceSystemMessage,
-        optimization_application_prompt: this.config.optimizationApplicationPrompt,
-        optimization_application_system_message: this.config.optimizationApplicationSystemMessage,
-        quality_analysis_system_prompt: this.config.qualityAnalysisSystemPrompt,
-        user_prompt_quality_analysis: this.config.userPromptQualityAnalysis,
-        user_prompt_quick_optimization: this.config.userPromptQuickOptimization,
-        user_prompt_rules: this.config.userPromptRules
+      if (this.dirtyFields.size === 0) {
+        console.log('[PromptConfig] 无修改，跳过保存')
+        return
       }
+
+      const { saveUserPromptRules } = await import('@/services/apiService')
+      
+      // 映射关系：驼峰 -> 下划线
+      const fieldMapping: Record<string, keyof PromptConfig> = {
+        'system_prompt_rules': 'systemPromptRules',
+        'user_guided_prompt_rules': 'userGuidedPromptRules',
+        'requirement_report_rules': 'requirementReportRules',
+        'thinking_points_extraction_prompt': 'thinkingPointsExtractionPrompt',
+        'thinking_points_system_message': 'thinkingPointsSystemMessage',
+        'system_prompt_generation_prompt': 'systemPromptGenerationPrompt',
+        'system_prompt_system_message': 'systemPromptSystemMessage',
+        'optimization_advice_prompt': 'optimizationAdvicePrompt',
+        'optimization_advice_system_message': 'optimizationAdviceSystemMessage',
+        'optimization_application_prompt': 'optimizationApplicationPrompt',
+        'optimization_application_system_message': 'optimizationApplicationSystemMessage',
+        'quality_analysis_system_prompt': 'qualityAnalysisSystemPrompt',
+        'user_prompt_quality_analysis': 'userPromptQualityAnalysis',
+        'user_prompt_quick_optimization': 'userPromptQuickOptimization',
+        'user_prompt_rules': 'userPromptRules'
+      }
+      
+      // 只保存修改过的字段
+      const cloudData: Record<string, any> = {}
+      this.dirtyFields.forEach(fieldName => {
+        const configKey = fieldMapping[fieldName]
+        if (configKey) {
+          cloudData[fieldName] = this.config[configKey]
+        }
+      })
+      
+      console.log('[PromptConfig] 保存修改的字段:', Array.from(this.dirtyFields))
       await saveUserPromptRules(cloudData)
+      
+      // 保存成功后，清空脏字段标记
+      this.dirtyFields.clear()
+      this.saveToStorage()
     } catch (error) {
       console.error('保存到云端失败:', error)
       throw error
     }
   }
 
+  /**
+   * 从云端加载配置（浏览器会话期间只调用一次）
+   */
   public async loadFromCloud(): Promise<boolean> {
     try {
+      // 检查本次会话是否已加载过（使用sessionStorage，关闭浏览器后失效）
+      const sessionLoaded = sessionStorage.getItem('yprompt_config_session_loaded')
+      if (sessionLoaded === 'true') {
+        console.log('[PromptConfig] 本次会话已加载，跳过API调用')
+        return true
+      }
+      
+      console.log('[PromptConfig] 首次会话加载，从云端获取最新配置')
       const { getUserPromptRules } = await import('@/services/apiService')
       const response = await getUserPromptRules()
       
       if (response.code === 200 && response.data) {
         const cloudConfig = response.data
+        // 只有云端有数据的字段才覆盖默认值
         this.config = {
           systemPromptRules: cloudConfig.system_prompt_rules || SYSTEM_PROMPT_RULES,
           userGuidedPromptRules: cloudConfig.user_guided_prompt_rules || USER_GUIDED_PROMPT_RULES,
@@ -426,13 +493,30 @@ export class PromptConfigManager {
           userPromptRules: cloudConfig.user_prompt_rules || USER_PROMPT_RULES
         }
         this.saveToStorage()
+        // 标记本次会话已加载（关闭浏览器后失效）
+        sessionStorage.setItem('yprompt_config_session_loaded', 'true')
+        console.log('[PromptConfig] 云端配置加载成功，已标记会话')
         return true
+      } else {
+        console.log('[PromptConfig] 云端无数据，使用默认配置')
+        // 即使没有数据，也标记为已加载
+        sessionStorage.setItem('yprompt_config_session_loaded', 'true')
+        return false
       }
-      return false
     } catch (error) {
-      console.error('从云端加载失败:', error)
+      console.error('[PromptConfig] 从云端加载失败:', error)
+      // 失败也标记，避免反复请求
+      sessionStorage.setItem('yprompt_config_session_loaded', 'true')
       return false
     }
+  }
+  
+  /**
+   * 手动刷新云端配置（用于用户点击刷新按钮）
+   */
+  public async forceReloadFromCloud(): Promise<boolean> {
+    sessionStorage.removeItem('yprompt_config_session_loaded')
+    return this.loadFromCloud()
   }
 
   public async deleteFromCloud(): Promise<void> {

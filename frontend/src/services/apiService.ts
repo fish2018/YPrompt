@@ -273,8 +273,19 @@ export async function saveUserPromptRules(rules: PromptRules) {
 
 /**
  * 删除用户的提示词规则（重置为默认）
+ * @param fields 要删除的字段列表，如果不传则删除所有
  */
-export async function deleteUserPromptRules() {
-  return del<{ code: number; message: string }>('/api/prompt-rules')
+export async function deleteUserPromptRules(fields?: string[]) {
+  if (fields && fields.length > 0) {
+    // 删除指定字段：传空值
+    const emptyData: Record<string, null> = {}
+    fields.forEach(field => {
+      emptyData[field] = null
+    })
+    return post<{ code: number; message: string }>('/api/prompt-rules', emptyData)
+  } else {
+    // 删除所有
+    return del<{ code: number; message: string }>('/api/prompt-rules')
+  }
 }
 
