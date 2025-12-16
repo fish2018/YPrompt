@@ -40,14 +40,14 @@ export class AIService {
   }
 
   private getProvider(provider: ProviderConfig, modelId: string): BaseProvider {
-    const key = `${provider.type}-${provider.baseUrl}-${modelId}`
+    const model = provider.models.find(m => m.id === modelId)
+    const apiType = model?.apiType || provider.type
+    
+    const key = `${apiType}-${provider.baseUrl}-${modelId}`
     
     if (this.providers.has(key)) {
       return this.providers.get(key)!
     }
-
-    const model = provider.models.find(m => m.id === modelId)
-    const apiType = model?.apiType || provider.type
 
     let providerInstance: BaseProvider
 
