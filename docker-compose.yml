@@ -44,7 +44,7 @@ services:
       - HEALTH_CHECK_TIMEOUT=10
       - HEALTH_CHECK_RETRIES=3
     healthcheck:
-      test: ["/app/healthcheck.sh"]
+      test: ["CMD-SHELL", "/app/healthcheck.sh"]
       interval: 30s
       timeout: 10s
       retries: 3
